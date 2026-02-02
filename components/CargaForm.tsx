@@ -22,12 +22,13 @@ const CargaForm: React.FC = () => {
     utilidadGfv: 0,
     inversor: '',
     utilidadInversor: 0,
+    destino: '',
   });
 
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -72,6 +73,24 @@ const CargaForm: React.FC = () => {
         <div className="space-y-6">
           <h3 className={sectionTitle}><i className="fa-solid fa-user-tie text-emerald-500"></i> Información del Cliente</h3>
           
+          <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 mb-6">
+            <label className={`${labelClass} text-emerald-800`}>¿A dónde quieres cargar el cliente?</label>
+            <select 
+              name="destino" 
+              value={formData.destino} 
+              onChange={handleInputChange} 
+              className={`${inputClass} border-emerald-200 bg-white font-medium`}
+            >
+              <option value="">Seleccione un destino...</option>
+              <option value="COMERCIAL 1">COMERCIAL 1</option>
+              <option value="COMERCIAL 2">COMERCIAL 2</option>
+              <option value="INTEGRA CAPITAL">INTEGRA CAPITAL</option>
+              <option value="INTERLUDIO">INTERLUDIO</option>
+              <option value="CAPTACIÓN">CAPTACIÓN</option>
+            </select>
+            <p className="text-[11px] text-emerald-600 mt-2 italic">* Define en qué segmento se guardará este registro.</p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>CI</label>

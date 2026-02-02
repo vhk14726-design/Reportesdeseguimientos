@@ -17,6 +17,7 @@ export interface FormData {
   utilidadGfv: number;
   inversor: string;
   utilidadInversor: number;
+  destino: string; // New field for loading destination
 }
 
 export type SidebarSegment = 
