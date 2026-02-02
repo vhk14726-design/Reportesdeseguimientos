@@ -40,7 +40,6 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
     rebotes: '',
   });
 
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,16 +55,11 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const requiredFields = [
-      'destino', 'ci', 'cliente', 'producto', 'analista', 
-      'equipo', 'agente', 'fechaAprobacion', 'sucursal', 
-      'desembolsador', 'motivo'
-    ];
-    
+    const requiredFields = ['destino', 'ci', 'cliente', 'producto', 'analista', 'agente'];
     const missing = requiredFields.filter(f => !formData[f as keyof FormData]);
     
     if (missing.length > 0) {
-      setError(`Faltan campos obligatorios: ${missing.join(', ').toUpperCase()}`);
+      setError(`Campos requeridos pendientes: ${missing.join(', ').toUpperCase()}`);
       return;
     }
 
@@ -73,172 +67,253 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
     setError(null);
 
     try {
-      const analysis = await analyzeFinancialData(formData);
-      setAiAnalysis(analysis);
-      onSave(formData);
-    } catch (err) {
-      console.error(err);
-      setError("Error al procesar la operación. Intente nuevamente.");
+      await onSave(formData);
+      alert("✅ Operación procesada y guardada correctamente.");
+    } catch (err: any) {
+      setError(`Error crítico: ${err.message || "Fallo en la conexión con el servidor"}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const inputContainerClass = "flex items-center gap-4 group";
-  const labelClass = "w-40 text-sm font-bold text-slate-700 italic text-right shrink-0";
-  const inputClass = "flex-1 bg-white border border-slate-200 rounded px-3 py-1.5 text-sm text-slate-900 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all shadow-sm group-hover:border-slate-300";
+  const labelClass = "block text-[11px] font-black uppercase tracking-tighter text-slate-500 mb-1.5 ml-1 italic";
+  const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all shadow-sm placeholder:text-slate-300";
+  const financialInputClass = "w-full bg-emerald-50/30 border border-emerald-100 rounded-xl px-4 py-2.5 text-sm font-black text-emerald-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-600 outline-none transition-all shadow-sm";
+  const currencyBadge = <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 italic pointer-events-none">GS.</span>;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-20">
-      <header className="flex justify-between items-center border-b border-slate-200 pb-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase flex items-center gap-3">
-            <i className="fa-solid fa-file-circle-plus text-emerald-600"></i>
-            Panel de Carga <span className="text-emerald-500 font-light italic text-xl lowercase tracking-normal">obligatorio todos los datos</span>
-          </h2>
-          {error && (
-            <div className="mt-2 text-red-500 text-xs font-bold bg-red-50 px-3 py-1 rounded-lg border border-red-100 flex items-center gap-2">
-              <i className="fa-solid fa-triangle-exclamation"></i>
-              {error}
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Superior: Título y Selector de Destino */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+          <div className="space-y-1">
+            <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
+              Nueva <span className="text-emerald-600">Operación</span>
+            </h1>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-1 bg-slate-900 rounded-full"></span>
+              <p className="text-slate-500 font-bold italic text-sm">Registro Centralizado de Inversiones GFV</p>
             </div>
-          )}
+          </div>
+
+          <div className="bg-white p-2 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100">
+            <div className="flex items-center gap-3 px-4">
+              <i className="fa-solid fa-layer-group text-slate-400"></i>
+              <select 
+                name="destino" 
+                required
+                value={formData.destino} 
+                onChange={handleInputChange} 
+                className="bg-transparent py-2.5 pr-8 text-sm font-black text-slate-900 focus:outline-none cursor-pointer uppercase italic"
+              >
+                <option value="">Seleccionar Segmento...</option>
+                <option value="COMERCIAL 1">COMERCIAL 1</option>
+                <option value="COMERCIAL 2">COMERCIAL 2</option>
+                <option value="INTEGRA CAPITAL">INTEGRA CAPITAL</option>
+                <option value="INTERLUDIO">INTERLUDIO</option>
+                <option value="CAPTACIÓN">CAPTACIÓN</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-4">
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* COLUMNA 1: Datos de Identificación (6 col) */}
+          <div className="lg:col-span-7 bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 space-y-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i className="fa-solid fa-id-card"></i>
+              </div>
+              <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">Ficha del Cliente</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="group">
+                <label className={labelClass}>Documento CI</label>
+                <input type="text" name="ci" value={formData.ci} onChange={handleInputChange} className={inputClass} placeholder="Ej: 1.234.567" />
+              </div>
+              <div className="group">
+                <label className={labelClass}>Nombre del Cliente</label>
+                <input type="text" name="cliente" value={formData.cliente} onChange={handleInputChange} className={inputClass} placeholder="Nombre y Apellido" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className={labelClass}>Producto Solicitado</label>
+                <input type="text" name="producto" value={formData.producto} onChange={handleInputChange} className={inputClass} placeholder="Ej: Crédito Puente" />
+              </div>
+              <div>
+                <label className={labelClass}>Analista Asignado</label>
+                <input type="text" name="analista" value={formData.analista} onChange={handleInputChange} className={inputClass} placeholder="Responsable de Análisis" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className={labelClass}>Equipo / Departamento</label>
+                <input type="text" name="equipo" value={formData.equipo} onChange={handleInputChange} className={inputClass} placeholder="Ej: Comercial A" />
+              </div>
+              <div>
+                <label className={labelClass}>Agente de Cierre</label>
+                <input type="text" name="agente" value={formData.agente} onChange={handleInputChange} className={inputClass} placeholder="Agente Comercial" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className={labelClass}>Fecha de Aprobación</label>
+                <input type="date" name="fechaAprobacion" value={formData.fechaAprobacion} onChange={handleInputChange} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Impugnaciones / Notas</label>
+                <input type="text" name="impugnaciones" value={formData.impugnaciones} onChange={handleInputChange} className={inputClass} placeholder="0" />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClass}>Seguimiento Detallado</label>
+              <textarea 
+                name="seguimiento" 
+                value={formData.seguimiento} 
+                onChange={handleInputChange} 
+                rows={3}
+                className={`${inputClass} resize-none py-4`} 
+                placeholder="Escriba aquí cualquier observación o seguimiento relevante..."
+              ></textarea>
+            </div>
+          </div>
+
+          {/* COLUMNA 2: Datos Financieros (5 col) */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="bg-emerald-600 p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-emerald-200/50 border border-emerald-500 relative overflow-hidden group">
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl group-hover:bg-emerald-400/30 transition-all duration-700"></div>
+              
+              <div className="flex items-center gap-3 mb-8 relative">
+                <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/30 shadow-lg">
+                  <i className="fa-solid fa-coins"></i>
+                </div>
+                <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Cifras de Operación</h3>
+              </div>
+
+              <div className="space-y-4 relative">
+                <div>
+                  <label className={`${labelClass} text-emerald-100`}>Monto de Inversión</label>
+                  <div className="relative">
+                    <input type="number" name="inversion" value={formData.inversion} onChange={handleInputChange} className={`${financialInputClass} bg-white/10 border-white/20 text-white placeholder:text-white/40`} />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-200 italic pointer-events-none">GS.</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`${labelClass} text-emerald-100`}>Monto de Solicitud</label>
+                  <div className="relative">
+                    <input type="number" name="solicitud" value={formData.solicitud} onChange={handleInputChange} className={`${financialInputClass} bg-white/10 border-white/20 text-white placeholder:text-white/40`} />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-200 italic pointer-events-none">GS.</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`${labelClass} text-emerald-100`}>Total a Devolver</label>
+                  <div className="relative">
+                    <input type="number" name="totalDevolver" value={formData.totalDevolver} onChange={handleInputChange} className={`${financialInputClass} bg-white/10 border-white/20 text-white placeholder:text-white/40`} />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-200 italic pointer-events-none">GS.</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`${labelClass} text-emerald-100`}>Monto Pagaré</label>
+                  <div className="relative">
+                    <input type="number" name="pagare" value={formData.pagare} onChange={handleInputChange} className={`${financialInputClass} bg-white/10 border-white/20 text-white placeholder:text-white/40`} />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-200 italic pointer-events-none">GS.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Utilidades e Inversor */}
+            <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 space-y-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                  <i className="fa-solid fa-chart-pie"></i>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">Distribución de Utilidad</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Utilidad Agente</label>
+                  <div className="relative">
+                    <input type="number" name="utilidadAgente" value={formData.utilidadAgente} onChange={handleInputChange} className={inputClass} />
+                    {currencyBadge}
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Utilidad GFV</label>
+                  <div className="relative">
+                    <input type="number" name="utilidadGfv" value={formData.utilidadGfv} onChange={handleInputChange} className={inputClass} />
+                    {currencyBadge}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-4 items-end">
+                  <div>
+                    <label className={labelClass}>Ident. Inversor</label>
+                    <input type="text" name="inversor" value={formData.inversor} onChange={handleInputChange} className={inputClass} placeholder="Ej: SIX" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Utilidad Inversor</label>
+                    <div className="relative">
+                      <input type="number" name="utilidadInversor" value={formData.utilidadInversor} onChange={handleInputChange} className={inputClass} />
+                      {currencyBadge}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        {/* Acciones Finales */}
+        <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-6">
           <button 
-            type="button"
+            type="button" 
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors font-bold text-sm uppercase tracking-wider"
+            className="w-full md:w-auto px-12 py-4 bg-slate-200 text-slate-600 font-black italic uppercase text-[10px] tracking-widest rounded-full hover:bg-slate-300 transition-all active:scale-95"
           >
-            Limpiar
+            Limpiar Datos
           </button>
+          
           <button 
             onClick={handleSubmit}
             disabled={loading}
-            className="px-8 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all font-bold text-sm uppercase tracking-wider shadow-lg shadow-emerald-600/20 flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto px-20 py-5 bg-[#0f172a] text-white font-black italic uppercase text-[11px] tracking-[0.25em] rounded-full hover:bg-black transition-all shadow-2xl shadow-slate-900/40 flex items-center justify-center gap-6 active:scale-95 disabled:opacity-50 group border border-white/5"
           >
-            {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-cloud-arrow-up"></i>}
-            Cargar al Sistema
+            {loading ? (
+              <i className="fa-solid fa-spinner fa-spin"></i>
+            ) : (
+              <>
+                <span>cargar cliente</span>
+                <i className="fa-solid fa-arrow-right-long group-hover:translate-x-1.5 transition-transform text-xs"></i>
+              </>
+            )}
           </button>
         </div>
-      </header>
 
-      <form onSubmit={handleSubmit} className="bg-slate-100/50 p-10 rounded-3xl border border-slate-200 shadow-inner grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-12">
-        <div className="space-y-4">
-          <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 mb-8 shadow-sm">
-             <div className={inputContainerClass}>
-                <label className="w-40 text-sm font-black text-emerald-700 uppercase tracking-tighter text-right italic">Destino Final</label>
-                <select 
-                  name="destino" 
-                  required
-                  value={formData.destino} 
-                  onChange={handleInputChange} 
-                  className="flex-1 bg-white border-2 border-emerald-200 rounded-xl px-4 py-2 text-sm font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
-                >
-                  <option value="">Seleccione Segmento...</option>
-                  <option value="COMERCIAL 1">COMERCIAL 1</option>
-                  <option value="COMERCIAL 2">COMERCIAL 2</option>
-                  <option value="INTEGRA CAPITAL">INTEGRA CAPITAL</option>
-                  <option value="INTERLUDIO">INTERLUDIO</option>
-                  <option value="CAPTACIÓN">CAPTACIÓN</option>
-                </select>
-             </div>
+        {error && (
+          <div className="mt-8 bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-4 animate-bounce">
+            <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center text-white shrink-0">
+              <i className="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <p className="text-red-700 font-bold text-sm">{error}</p>
           </div>
+        )}
 
-          <div className={inputContainerClass}>
-            <label className={labelClass}>CI *</label>
-            <input type="text" name="ci" required value={formData.ci} onChange={handleInputChange} className={inputClass} placeholder="1.234.567" />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Cliente? *</label>
-            <input type="text" name="cliente" required value={formData.cliente} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Producto? *</label>
-            <input type="text" name="producto" required value={formData.producto} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Analista? *</label>
-            <input type="text" name="analista" required value={formData.analista} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Equipo? *</label>
-            <input type="text" name="equipo" required value={formData.equipo} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Agente? *</label>
-            <input type="text" name="agente" required value={formData.agente} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Sucursal *</label>
-            <input type="text" name="sucursal" required value={formData.sucursal} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Fecha Aprobación *</label>
-            <input type="date" name="fechaAprobacion" required value={formData.fechaAprobacion} onChange={handleInputChange} className={inputClass} />
-          </div>
-
-          <div className="pt-6 border-t border-slate-200 grid grid-cols-2 gap-4">
-             <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Cant. BCP</label>
-                <input type="number" name="cantidadBcp" value={formData.cantidadBcp} onChange={handleInputChange} className={inputClass} />
-             </div>
-             <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Cant. Infconf</label>
-                <input type="number" name="cantidadInformconf" value={formData.cantidadInformconf} onChange={handleInputChange} className={inputClass} />
-             </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Desembolsador *</label>
-            <input type="text" name="desembolsador" required value={formData.desembolsador} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Experiencia Suc</label>
-            <input type="text" name="experienciaSuc" value={formData.experienciaSuc} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Impugnaciones</label>
-            <input type="text" name="impugnaciones" value={formData.impugnaciones} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Mas o Menos?</label>
-            <select name="masOMenos" value={formData.masOMenos} onChange={handleInputChange} className={inputClass}>
-              <option value="MAS">MÁS</option>
-              <option value="MENOS">MENOS</option>
-              <option value="IGUAL">IGUAL</option>
-            </select>
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Motivo *</label>
-            <input type="text" name="motivo" required value={formData.motivo} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Monto Dado</label>
-            <input type="number" name="montoDado" value={formData.montoDado} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Posible Desemb.</label>
-            <input type="text" name="posibleDesembolso" value={formData.posibleDesembolso} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Rebotes</label>
-            <input type="text" name="rebotes" value={formData.rebotes} onChange={handleInputChange} className={inputClass} />
-          </div>
-          
-          <div className="pt-6 border-t border-slate-200 grid grid-cols-2 gap-4">
-             <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Inversión</label>
-                <input type="number" name="inversion" value={formData.inversion} onChange={handleInputChange} className={inputClass} />
-             </div>
-             <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Solicitud</label>
-                <input type="number" name="solicitud" value={formData.solicitud} onChange={handleInputChange} className={inputClass} />
-             </div>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };

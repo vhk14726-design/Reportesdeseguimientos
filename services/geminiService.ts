@@ -3,7 +3,13 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { FormData } from "../types";
 
 export const analyzeFinancialData = async (data: FormData) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("Análisis omitido: API_KEY no configurada.");
+    return null;
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const prompt = `
     Analiza los siguientes datos financieros de una operación y proporciona un resumen ejecutivo, 
@@ -50,7 +56,7 @@ export const analyzeFinancialData = async (data: FormData) => {
 
     return JSON.parse(response.text || "{}");
   } catch (error) {
-    console.error("Error analyzing data:", error);
+    console.error("Error analyzing data with Gemini:", error);
     return null;
   }
 };
