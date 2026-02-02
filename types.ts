@@ -17,7 +17,12 @@ export interface FormData {
   utilidadGfv: number;
   inversor: string;
   utilidadInversor: number;
-  destino: string; // New field for loading destination
+  destino: string;
+  // Fields for the tracking table
+  cantidadBcp: number;
+  cantidadInformconf: number;
+  sucursal: string;
+  status?: 'COMPLETO' | 'PENDIENTE' | 'OBSERVADO';
 }
 
 export type SidebarSegment = 
