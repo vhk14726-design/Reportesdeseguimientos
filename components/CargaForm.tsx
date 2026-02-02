@@ -49,9 +49,10 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
     e.preventDefault();
     
     // Strict validation for "obligatoriamente todos los datos"
+    // Removed 'sucursal' from mandatory checks
     const requiredFields = [
       'destino', 'ci', 'cliente', 'producto', 'analista', 
-      'equipo', 'agente', 'fechaAprobacion', 'sucursal'
+      'equipo', 'agente', 'fechaAprobacion'
     ];
     
     const missing = requiredFields.filter(f => !formData[f as keyof FormData]);
@@ -70,11 +71,9 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
     setError(null);
 
     try {
-      // Gemini analysis for better decision making
       const analysis = await analyzeFinancialData(formData);
       setAiAnalysis(analysis);
       
-      // Save to global state (this will automatically route the user to the destination in App.tsx)
       onSave(formData);
     } catch (err) {
       console.error(err);
@@ -129,7 +128,6 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
       </header>
 
       <form onSubmit={handleSubmit} className="bg-slate-100/50 p-10 rounded-3xl border border-slate-200 shadow-inner grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-12">
-        {/* Left Column: Client Info */}
         <div className="space-y-4">
           <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 mb-8 shadow-sm">
              <div className={inputContainerClass}>
@@ -201,7 +199,6 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
           </div>
         </div>
 
-        {/* Right Column: Financial Details */}
         <div className="space-y-4">
           <div className={inputContainerClass}>
             <label className={labelClass}>Inversión *</label>
@@ -236,10 +233,6 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
           <div className={inputContainerClass}>
             <label className={labelClass}>Utilidad [INVERSOR]</label>
             <input type="number" name="utilidadInversor" value={formData.utilidadInversor} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Sucursal *</label>
-            <input type="text" name="sucursal" required value={formData.sucursal} onChange={handleInputChange} className={inputClass} placeholder="MATRIZ" />
           </div>
           <p className="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-widest text-right">* CAMPOS OBLIGATORIOS PARA EL REGISTRO</p>
         </div>
