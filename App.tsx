@@ -6,9 +6,9 @@ import Dashboard from './components/Dashboard';
 import ClientList from './components/ClientList';
 import { SidebarSegment, FormData } from './types';
 
-// Mock initial data based on the user's provided image with more details
 const MOCK_CLIENTS: FormData[] = [
   { 
+    id: '1',
     ci: '2.375.630', 
     cliente: 'MARIN BARBOZA, ROBERTO', 
     analista: 'SIN INVERSION', 
@@ -29,31 +29,15 @@ const MOCK_CLIENTS: FormData[] = [
     destino: 'COMERCIAL 1', 
     cantidadBcp: 0, 
     cantidadInformconf: 0, 
-    sucursal: 'MATRIZ' 
-  },
-  { 
-    ci: '2.196.840', 
-    cliente: 'ABRIGO GOIBURU, CARLOS ADALBERTO', 
-    analista: 'CARLOS GARAY', 
-    agente: 'ALBERTO VARGAS', 
-    producto: 'CRÉDITO PUENTE', 
-    equipo: 'EQ2', 
-    fechaAprobacion: '2024-05-12', 
-    impugnaciones: '2', 
-    seguimiento: 'Documentación en revisión por el analista.', 
-    inversion: 15000000, 
-    solicitud: 18000000, 
-    totalDevolver: 21000000, 
-    pagare: 21000000, 
-    utilidadAgente: 1500000, 
-    utilidadGfv: 2500000, 
-    inversor: 'JUAN LOPEZ', 
-    utilidadInversor: 1000000, 
-    destino: 'COMERCIAL 1', 
-    cantidadBcp: 2, 
-    cantidadInformconf: 2, 
-    sucursal: 'MATRIZ' 
-  },
+    sucursal: 'MATRIZ',
+    desembolsador: 'PEDRO BAEZ',
+    experienciaSuc: 'BUENA',
+    masOMenos: 'IGUAL',
+    motivo: 'SCORE ALTO',
+    montoDado: 30000000,
+    posibleDesembolso: '2024-05-15',
+    rebotes: 'NINGUNO'
+  }
 ];
 
 const App: React.FC = () => {
@@ -61,9 +45,12 @@ const App: React.FC = () => {
   const [clientData, setClientData] = useState<FormData[]>(MOCK_CLIENTS);
 
   const handleSaveClient = (newClient: FormData) => {
-    setClientData(prev => [newClient, ...prev]);
-    // Optionally switch to the segment where it was loaded
+    setClientData(prev => [{ ...newClient, id: Date.now().toString() }, ...prev]);
     setActiveSegment(newClient.destino as SidebarSegment);
+  };
+
+  const handleUpdateClient = (updatedClient: FormData) => {
+    setClientData(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
   };
 
   const renderContent = () => {
@@ -80,7 +67,7 @@ const App: React.FC = () => {
       case 'INTEGRA CAPITAL':
       case 'CAPTACIÓN':
       case 'INTERLUDIO':
-        return <ClientList title={activeSegment} clients={segmentClients} />;
+        return <ClientList title={activeSegment} clients={segmentClients} onUpdate={handleUpdateClient} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
@@ -130,14 +117,6 @@ const App: React.FC = () => {
 
         <div className="bg-transparent">
           {renderContent()}
-        </div>
-
-        {/* AI Helper - Premium style */}
-        <div className="fixed bottom-10 right-10">
-          <button className="w-16 h-16 bg-slate-900 hover:bg-emerald-600 text-white rounded-[1.5rem] shadow-2xl flex items-center justify-center transition-all hover:scale-110 hover:-rotate-6 active:scale-95 group relative overflow-hidden">
-             <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent"></div>
-             <i className="fa-solid fa-robot text-2xl relative z-10 group-hover:animate-bounce"></i>
-          </button>
         </div>
       </main>
     </div>

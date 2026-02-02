@@ -9,6 +9,7 @@ interface CargaFormProps {
 
 const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
   const [formData, setFormData] = useState<FormData>({
+    id: '',
     ci: '',
     cliente: '',
     producto: '',
@@ -30,6 +31,13 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
     cantidadBcp: 0,
     cantidadInformconf: 0,
     sucursal: 'MATRIZ',
+    desembolsador: '',
+    experienciaSuc: '',
+    masOMenos: 'IGUAL',
+    motivo: '',
+    montoDado: 0,
+    posibleDesembolso: '',
+    rebotes: '',
   });
 
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
@@ -48,11 +56,10 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Strict validation for "obligatoriamente todos los datos"
-    // Removed 'sucursal' from mandatory checks
     const requiredFields = [
       'destino', 'ci', 'cliente', 'producto', 'analista', 
-      'equipo', 'agente', 'fechaAprobacion'
+      'equipo', 'agente', 'fechaAprobacion', 'sucursal', 
+      'desembolsador', 'motivo'
     ];
     
     const missing = requiredFields.filter(f => !formData[f as keyof FormData]);
@@ -62,18 +69,12 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
       return;
     }
 
-    if (formData.inversion <= 0 || formData.solicitud <= 0) {
-      setError("Los valores financieros (Inversión/Solicitud) deben ser mayores a cero.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
       const analysis = await analyzeFinancialData(formData);
       setAiAnalysis(analysis);
-      
       onSave(formData);
     } catch (err) {
       console.error(err);
@@ -93,7 +94,7 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase flex items-center gap-3">
             <i className="fa-solid fa-file-circle-plus text-emerald-600"></i>
-            Panel de Carga <span className="text-emerald-500 font-light italic text-xl lowercase tracking-normal">nueva operación</span>
+            Panel de Carga <span className="text-emerald-500 font-light italic text-xl lowercase tracking-normal">obligatorio todos los datos</span>
           </h2>
           {error && (
             <div className="mt-2 text-red-500 text-xs font-bold bg-red-50 px-3 py-1 rounded-lg border border-red-100 flex items-center gap-2">
@@ -105,13 +106,7 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
         <div className="flex gap-4">
           <button 
             type="button"
-            onClick={() => setFormData({
-              ci: '', cliente: '', producto: '', analista: '', equipo: '', agente: '',
-              fechaAprobacion: '', impugnaciones: '', seguimiento: '', inversion: 0,
-              solicitud: 0, totalDevolver: 0, pagare: 0, utilidadAgente: 0,
-              utilidadGfv: 0, inversor: '', utilidadInversor: 0, destino: '',
-              cantidadBcp: 0, cantidadInformconf: 0, sucursal: 'MATRIZ',
-            })}
+            onClick={() => window.location.reload()}
             className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors font-bold text-sm uppercase tracking-wider"
           >
             Limpiar
@@ -147,7 +142,6 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
                   <option value="CAPTACIÓN">CAPTACIÓN</option>
                 </select>
              </div>
-             <p className="text-[10px] text-emerald-600 font-bold mt-2 text-center uppercase tracking-widest italic">La operación se guardará automáticamente en este destino</p>
           </div>
 
           <div className={inputContainerClass}>
@@ -156,35 +150,31 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
           </div>
           <div className={inputContainerClass}>
             <label className={labelClass}>¿Cliente? *</label>
-            <input type="text" name="cliente" required value={formData.cliente} onChange={handleInputChange} className={inputClass} placeholder="Pedro Gonzalez" />
+            <input type="text" name="cliente" required value={formData.cliente} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
             <label className={labelClass}>¿Producto? *</label>
-            <input type="text" name="producto" required value={formData.producto} onChange={handleInputChange} className={inputClass} placeholder="Credito Puente" />
+            <input type="text" name="producto" required value={formData.producto} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
             <label className={labelClass}>¿Analista? *</label>
-            <input type="text" name="analista" required value={formData.analista} onChange={handleInputChange} className={inputClass} placeholder="Carlos Garay" />
+            <input type="text" name="analista" required value={formData.analista} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
             <label className={labelClass}>¿Equipo? *</label>
-            <input type="text" name="equipo" required value={formData.equipo} onChange={handleInputChange} className={inputClass} placeholder="Comercial 1" />
+            <input type="text" name="equipo" required value={formData.equipo} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
             <label className={labelClass}>¿Agente? *</label>
-            <input type="text" name="agente" required value={formData.agente} onChange={handleInputChange} className={inputClass} placeholder="Federico Espadin" />
+            <input type="text" name="agente" required value={formData.agente} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
-            <label className={labelClass}>Fecha de aprobación *</label>
+            <label className={labelClass}>Sucursal *</label>
+            <input type="text" name="sucursal" required value={formData.sucursal} onChange={handleInputChange} className={inputClass} />
+          </div>
+          <div className={inputContainerClass}>
+            <label className={labelClass}>Fecha Aprobación *</label>
             <input type="date" name="fechaAprobacion" required value={formData.fechaAprobacion} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>¿Impugnaciones?</label>
-            <input type="text" name="impugnaciones" value={formData.impugnaciones} onChange={handleInputChange} className={inputClass} placeholder="2" />
-          </div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Seguimiento</label>
-            <textarea name="seguimiento" rows={2} value={formData.seguimiento} onChange={handleInputChange} className={`${inputClass} resize-none`} placeholder="Observación"></textarea>
           </div>
 
           <div className="pt-6 border-t border-slate-200 grid grid-cols-2 gap-4">
@@ -193,7 +183,7 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
                 <input type="number" name="cantidadBcp" value={formData.cantidadBcp} onChange={handleInputChange} className={inputClass} />
              </div>
              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Cant. Informconf</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Cant. Infconf</label>
                 <input type="number" name="cantidadInformconf" value={formData.cantidadInformconf} onChange={handleInputChange} className={inputClass} />
              </div>
           </div>
@@ -201,64 +191,54 @@ const CargaForm: React.FC<CargaFormProps> = ({ onSave }) => {
 
         <div className="space-y-4">
           <div className={inputContainerClass}>
-            <label className={labelClass}>Inversión *</label>
-            <input type="number" name="inversion" required value={formData.inversion} onChange={handleInputChange} className={inputClass} />
+            <label className={labelClass}>Desembolsador *</label>
+            <input type="text" name="desembolsador" required value={formData.desembolsador} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
-            <label className={labelClass}>Solicitud *</label>
-            <input type="number" name="solicitud" required value={formData.solicitud} onChange={handleInputChange} className={inputClass} />
+            <label className={labelClass}>Experiencia Suc</label>
+            <input type="text" name="experienciaSuc" value={formData.experienciaSuc} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
-            <label className={labelClass}>Total a devolver</label>
-            <input type="number" name="totalDevolver" value={formData.totalDevolver} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className="h-4"></div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Pagaré</label>
-            <input type="number" name="pagare" value={formData.pagare} onChange={handleInputChange} className={inputClass} />
-          </div>
-          <div className="h-4"></div>
-          <div className={inputContainerClass}>
-            <label className={labelClass}>Utilidad [AGENTE]</label>
-            <input type="number" name="utilidadAgente" value={formData.utilidadAgente} onChange={handleInputChange} className={inputClass} />
+            <label className={labelClass}>Impugnaciones</label>
+            <input type="text" name="impugnaciones" value={formData.impugnaciones} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
-            <label className={labelClass}>Utilidad [GFV]</label>
-            <input type="number" name="utilidadGfv" value={formData.utilidadGfv} onChange={handleInputChange} className={inputClass} />
+            <label className={labelClass}>¿Mas o Menos?</label>
+            <select name="masOMenos" value={formData.masOMenos} onChange={handleInputChange} className={inputClass}>
+              <option value="MAS">MÁS</option>
+              <option value="MENOS">MENOS</option>
+              <option value="IGUAL">IGUAL</option>
+            </select>
           </div>
           <div className={inputContainerClass}>
-            <label className={labelClass}>¿Inversor?</label>
-            <input type="text" name="inversor" value={formData.inversor} onChange={handleInputChange} className={inputClass} />
+            <label className={labelClass}>Motivo *</label>
+            <input type="text" name="motivo" required value={formData.motivo} onChange={handleInputChange} className={inputClass} />
           </div>
           <div className={inputContainerClass}>
-            <label className={labelClass}>Utilidad [INVERSOR]</label>
-            <input type="number" name="utilidadInversor" value={formData.utilidadInversor} onChange={handleInputChange} className={inputClass} />
+            <label className={labelClass}>Monto Dado</label>
+            <input type="number" name="montoDado" value={formData.montoDado} onChange={handleInputChange} className={inputClass} />
           </div>
-          <p className="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-widest text-right">* CAMPOS OBLIGATORIOS PARA EL REGISTRO</p>
+          <div className={inputContainerClass}>
+            <label className={labelClass}>Posible Desemb.</label>
+            <input type="text" name="posibleDesembolso" value={formData.posibleDesembolso} onChange={handleInputChange} className={inputClass} />
+          </div>
+          <div className={inputContainerClass}>
+            <label className={labelClass}>Rebotes</label>
+            <input type="text" name="rebotes" value={formData.rebotes} onChange={handleInputChange} className={inputClass} />
+          </div>
+          
+          <div className="pt-6 border-t border-slate-200 grid grid-cols-2 gap-4">
+             <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Inversión</label>
+                <input type="number" name="inversion" value={formData.inversion} onChange={handleInputChange} className={inputClass} />
+             </div>
+             <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 italic">Solicitud</label>
+                <input type="number" name="solicitud" value={formData.solicitud} onChange={handleInputChange} className={inputClass} />
+             </div>
+          </div>
         </div>
       </form>
-
-      {aiAnalysis && (
-        <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl border border-slate-700 animate-in slide-in-from-bottom-4 duration-500">
-           <div className="flex items-center gap-4 mb-6">
-              <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-                <i className="fa-solid fa-robot text-white"></i>
-              </div>
-              <h3 className="text-lg font-bold">Operación Cargada con éxito - Análisis Gemini</h3>
-           </div>
-           <p className="text-slate-400 text-sm leading-relaxed mb-6">{aiAnalysis.resumen}</p>
-           <div className="flex gap-10">
-              <div>
-                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Puntuación</p>
-                <p className="text-3xl font-black">{aiAnalysis.scoreRiesgo}/10</p>
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">Recomendación Principal</p>
-                <p className="text-sm font-medium">{aiAnalysis.recomendaciones[0]}</p>
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 };

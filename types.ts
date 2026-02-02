@@ -1,5 +1,6 @@
 
 export interface FormData {
+  id: string;
   ci: string;
   cliente: string;
   producto: string;
@@ -18,10 +19,17 @@ export interface FormData {
   inversor: string;
   utilidadInversor: number;
   destino: string;
-  // Fields for the tracking table
+  // Tracking fields
   cantidadBcp: number;
   cantidadInformconf: number;
   sucursal: string;
+  desembolsador: string;
+  experienciaSuc: string;
+  masOMenos: string; // ¿se le dio mas o menos?
+  motivo: string;
+  montoDado: number;
+  posibleDesembolso: string;
+  rebotes: string;
   status?: 'COMPLETO' | 'PENDIENTE' | 'OBSERVADO';
 }
 
