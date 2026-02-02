@@ -1,59 +1,83 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import CargaForm from './components/CargaForm';
 import Dashboard from './components/Dashboard';
 import ClientList from './components/ClientList';
 import { SidebarSegment, FormData } from './types';
-
-const MOCK_CLIENTS: FormData[] = [
-  { 
-    id: '1',
-    ci: '2.375.630', 
-    cliente: 'MARIN BARBOZA, ROBERTO', 
-    analista: 'SIN INVERSION', 
-    agente: 'MIGUEL GONZALEZ', 
-    producto: 'CRÉDITO', 
-    equipo: 'EQ1', 
-    fechaAprobacion: '2024-05-10', 
-    impugnaciones: '0', 
-    seguimiento: 'Primer contacto realizado satisfactoriamente.', 
-    inversion: 25000000, 
-    solicitud: 30000000, 
-    totalDevolver: 35000000, 
-    pagare: 35000000, 
-    utilidadAgente: 2000000, 
-    utilidadGfv: 3000000, 
-    inversor: 'CARLOS DIAZ', 
-    utilidadInversor: 1500000, 
-    destino: 'COMERCIAL 1', 
-    cantidadBcp: 0, 
-    cantidadInformconf: 0, 
-    sucursal: 'MATRIZ',
-    desembolsador: 'PEDRO BAEZ',
-    experienciaSuc: 'BUENA',
-    masOMenos: 'IGUAL',
-    motivo: 'SCORE ALTO',
-    montoDado: 30000000,
-    posibleDesembolso: '2024-05-15',
-    rebotes: 'NINGUNO'
-  }
-];
+import { db, supabase } from './services/supabase';
 
 const App: React.FC = () => {
   const [activeSegment, setActiveSegment] = useState<SidebarSegment>('CARGA');
-  const [clientData, setClientData] = useState<FormData[]>(MOCK_CLIENTS);
+  const [clientData, setClientData] = useState<FormData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [configError, setConfigError] = useState(false);
 
-  const handleSaveClient = (newClient: FormData) => {
-    setClientData(prev => [{ ...newClient, id: Date.now().toString() }, ...prev]);
-    setActiveSegment(newClient.destino as SidebarSegment);
+  // Load data from Supabase on mount
+  useEffect(() => {
+    const loadData = async () => {
+      if (!supabase) {
+        console.warn("Supabase no está configurado. La aplicación funcionará en modo local (sin persistencia).");
+        setConfigError(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await db.getAll();
+        setClientData(data);
+      } catch (err) {
+        console.error("Error loading data from Supabase:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleSaveClient = async (newClient: FormData) => {
+    try {
+      if (!supabase) {
+        // Fallback to local state if no DB
+        const mockSaved = { ...newClient, id: Date.now().toString() };
+        setClientData(prev => [mockSaved, ...prev]);
+        setActiveSegment(mockSaved.destino as SidebarSegment);
+        return;
+      }
+
+      const savedClient = await db.insert(newClient);
+      setClientData(prev => [savedClient, ...prev]);
+      setActiveSegment(savedClient.destino as SidebarSegment);
+    } catch (err) {
+      console.error("Error saving to Supabase:", err);
+      alert("Error al guardar en la base de datos. Verifique su conexión.");
+    }
   };
 
-  const handleUpdateClient = (updatedClient: FormData) => {
-    setClientData(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
+  const handleUpdateClient = async (updatedClient: FormData) => {
+    try {
+      if (!supabase) {
+        setClientData(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
+        return;
+      }
+      const saved = await db.update(updatedClient.id, updatedClient);
+      setClientData(prev => prev.map(c => c.id === saved.id ? saved : c));
+    } catch (err) {
+      console.error("Error updating in Supabase:", err);
+    }
   };
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+          <i className="fa-solid fa-spinner fa-spin text-4xl mb-4"></i>
+          <p className="font-bold uppercase tracking-widest text-xs">Sincronizando con Supabase...</p>
+        </div>
+      );
+    }
+
     const segmentClients = clientData.filter(c => c.destino === activeSegment);
 
     switch (activeSegment) {
@@ -73,7 +97,6 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
             <i className="fa-solid fa-hammer text-6xl opacity-20"></i>
             <h2 className="text-2xl font-bold">Segmento en Construcción</h2>
-            <p>Estamos trabajando para traerte esta funcionalidad pronto.</p>
           </div>
         );
     }
@@ -89,14 +112,14 @@ const App: React.FC = () => {
       <main className="flex-1 overflow-x-hidden p-6 md:p-10 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-            <span className="text-slate-900">GFV</span>
+            <span className="text-slate-900">GFV Cloud</span>
             <i className="fa-solid fa-chevron-right text-[8px]"></i>
             <span className="text-emerald-600">{activeSegment}</span>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-tighter border border-emerald-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Conectado
+            <div className={`flex items-center gap-2 px-3 py-1 ${configError ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'} rounded-full text-[9px] font-black uppercase tracking-tighter border`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${configError ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}></span>
+              {configError ? 'Modo Local (Sin DB)' : 'DB Conectada'}
             </div>
             <button className="relative text-slate-400 hover:text-slate-900 transition-colors">
               <i className="fa-solid fa-bell text-lg"></i>
@@ -109,11 +132,18 @@ const App: React.FC = () => {
                   <p className="text-[9px] font-bold text-slate-400 uppercase">Panel Central</p>
                </div>
                <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
-                  <i className="fa-solid fa-user-gear"></i>
+                  <i className={`fa-solid ${configError ? 'fa-triangle-exclamation text-amber-400' : 'fa-database'}`}></i>
                </div>
             </div>
           </div>
         </div>
+
+        {configError && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl flex items-center gap-3 text-sm font-medium animate-in slide-in-from-top-2 duration-500">
+            <i className="fa-solid fa-circle-info text-amber-500 text-lg"></i>
+            Las credenciales de Supabase no están configuradas. Los datos solo se guardarán temporalmente en esta sesión.
+          </div>
+        )}
 
         <div className="bg-transparent">
           {renderContent()}
